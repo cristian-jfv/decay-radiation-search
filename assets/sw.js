@@ -1,9 +1,9 @@
-var cacheName = 'egui-template-pwa';
+var cacheName = 'decay-radiation-search';
 var filesToCache = [
   './',
   './index.html',
-  './eframe_template.js',
-  './eframe_template_bg.wasm',
+  './decay-radiation-search.js',
+  './decay-radiation-search.wasm',
 ];
 
 /* Start the service worker and cache all of the app's content */
