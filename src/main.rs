@@ -4,6 +4,7 @@
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
+    use eframe::Theme;
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     let native_options = eframe::NativeOptions {
@@ -15,6 +16,7 @@ fn main() -> eframe::Result<()> {
                 eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
                     .unwrap(),
             ),
+        default_theme: Theme::Light,
         ..Default::default()
     };
     eframe::run_native(
@@ -27,10 +29,15 @@ fn main() -> eframe::Result<()> {
 // When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 fn main() {
+    use eframe::Theme;
     // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
-    let web_options = eframe::WebOptions::default();
+    let web_options = eframe::WebOptions {
+        follow_system_theme: false,
+        default_theme: Theme::Light,
+        ..Default::default()
+    };
 
     wasm_bindgen_futures::spawn_local(async {
         eframe::WebRunner::new()
