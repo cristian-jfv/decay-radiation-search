@@ -1,6 +1,8 @@
 use egui::{Color32, Layout, TextStyle};
 use egui_extras::{Size, StripBuilder};
 
+use super::query_parser::parse_user_query;
+
 #[derive(PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "type")]
 enum SearchMode {
@@ -118,7 +120,7 @@ impl eframe::App for TemplateApp {
                             0.0,
                             faded_color(Color32::BLUE),
                         );
-                        ui.label("Examples? ");
+                        ui.label("Examples?");
                     });
                     // Query area
                     strip.cell(|ui| {
@@ -139,6 +141,10 @@ impl eframe::App for TemplateApp {
                             ui.radio_value(&mut self.search_mode, SearchMode::Only, "Only");
                             ui.horizontal(|ui| ui.separator());
                             let search_response = ui.button("Search");
+                            if search_response.clicked() {
+                                log::debug!("asdasaasdad");
+                                self.search_results = parse_user_query(self.user_query.clone());
+                            }
                         });
                     });
                     // Results area
