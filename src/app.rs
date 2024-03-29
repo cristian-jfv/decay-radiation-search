@@ -142,8 +142,10 @@ impl eframe::App for TemplateApp {
                             ui.horizontal(|ui| ui.separator());
                             let search_response = ui.button("Search");
                             if search_response.clicked() {
-                                log::debug!("asdasaasdad");
-                                self.search_results = parse_user_query(self.user_query.clone());
+                                let energies = match parse_user_query(self.user_query.clone()) {
+                                    Ok(v) => v,
+                                    Err(e) => Vec::new(),
+                                };
                             }
                         });
                     });
