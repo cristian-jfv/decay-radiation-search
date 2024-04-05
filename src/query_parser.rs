@@ -65,7 +65,7 @@ fn calculate_energy_bounds(energy: &str, uncertainty: &str, unit: &str) -> (f64,
 
     let lteb = e * base.powf(m) * (1.0 - u);
     let uteb = e * base.powf(m) * (1.0 + u);
-    return (lteb, uteb);
+    (lteb, uteb)
 }
 
 fn parse_line(line: &str) -> Result<Energy, InputError> {
@@ -73,7 +73,7 @@ fn parse_line(line: &str) -> Result<Energy, InputError> {
     match RE.captures(line) {
         None => {
             debug!("NO MATCH: {line}");
-            return Err(InputError);
+            Err(InputError)
         }
         Some(cap) => {
             let uncert = match cap.name("uncertainty") {
@@ -103,7 +103,7 @@ fn parse_line(line: &str) -> Result<Energy, InputError> {
 
             //debug!("{e}");
 
-            return Ok(e);
+            Ok(e)
         }
     }
 }
@@ -113,7 +113,7 @@ fn parse_user_query(input: String) -> Result<Vec<Energy>, InputError> {
     let mut energies = Vec::new();
 
     for line in lines {
-        let line = line.split("#").nth(0).unwrap().trim();
+        let line = line.split('#').next().unwrap().trim();
         if line.is_empty() {
             continue;
         }
@@ -125,7 +125,7 @@ fn parse_user_query(input: String) -> Result<Vec<Energy>, InputError> {
             }
         }
     }
-    return Ok(energies);
+    Ok(energies)
 }
 
 fn print_results(
@@ -167,7 +167,7 @@ fn print_results(
             i += 1;
         }
     }
-    return ans;
+    ans
 }
 
 pub fn search_energies(
@@ -184,10 +184,10 @@ pub fn search_energies(
 
     match query_database(&energies, radiation_type) {
         Some(map) => {
-            return print_results(map, print_mode);
+            print_results(map, print_mode)
         }
         None => {
-            return "No results found".to_string();
+            "No results found".to_string()
         }
     }
 }

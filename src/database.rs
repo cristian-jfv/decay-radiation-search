@@ -39,13 +39,13 @@ fn energy_in_transition_range(e: &Energy, t: &Transition) -> bool {
     if (t.lteb <= e.lteb && e.lteb <= t.uteb) || (e.lteb <= t.lteb && t.lteb <= e.uteb) {
         return true;
     }
-    return false;
+    false
 }
 
 fn filter_by_energy(e: &Energy, radiation_type: &RadiationType) -> HashSet<String> {
     let parents_vec = DATABASE
         .iter()
-        .filter(|t| energy_in_transition_range(e, &t) && *radiation_type == t.radiation_type)
+        .filter(|t| energy_in_transition_range(e, t) && *radiation_type == t.radiation_type)
         .map(|t| t.decay_type.clone());
     HashSet::from_iter(parents_vec)
 }
@@ -56,7 +56,7 @@ fn filter_by_decay_type(p: &String, radiation_type: &RadiationType) -> Vec<Trans
         .filter(|t| t.decay_type == *p && *radiation_type == t.radiation_type)
         .cloned()
         .collect();
-    return ts;
+    ts
 }
 
 fn mark_found_transitions(es: &Vec<Energy>, ts: Vec<Transition>) -> Vec<TransitionResult> {
@@ -64,7 +64,7 @@ fn mark_found_transitions(es: &Vec<Energy>, ts: Vec<Transition>) -> Vec<Transiti
     for t in ts {
         let mut found = false;
         for e in es {
-            if energy_in_transition_range(&e, &t) {
+            if energy_in_transition_range(e, &t) {
                 found = true;
                 break;
             }
@@ -78,17 +78,17 @@ fn mark_found_transitions(es: &Vec<Energy>, ts: Vec<Transition>) -> Vec<Transiti
             .partial_cmp(&b.t.transition_energy.parse::<f64>().unwrap())
             .expect("Error while sorting transition energies")
     });
-    return ans;
+    ans
 }
 
 pub fn query_database(
     energies: &Vec<Energy>,
     radiation_type: &RadiationType,
 ) -> Option<HashMap<String, Vec<TransitionResult>>> {
-    let mut decays: HashSet<String> = filter_by_energy(&energies[0], &radiation_type);
+    let mut decays: HashSet<String> = filter_by_energy(&energies[0], radiation_type);
 
     for e in energies {
-        let current_decays = filter_by_energy(&e, &radiation_type);
+        let current_decays = filter_by_energy(e, radiation_type);
         decays.retain(|x| current_decays.contains(x));
     }
 
@@ -102,9 +102,9 @@ pub fn query_database(
     for p in decays {
         results.insert(
             p.clone(),
-            mark_found_transitions(&energies, filter_by_decay_type(&p, &radiation_type)),
+            mark_found_transitions(energies, filter_by_decay_type(&p, radiation_type)),
         );
     }
 
-    return Some(results);
+    Some(results)
 }

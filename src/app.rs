@@ -1,6 +1,6 @@
 use egui::{Color32, TextStyle};
 use egui_extras::{Size, StripBuilder};
-use log::debug;
+
 
 use crate::query_parser::search_energies;
 
@@ -122,7 +122,7 @@ impl eframe::App for TemplateApp {
 
             let dark_mode = ui.visuals().dark_mode;
             let faded_color = ui.visuals().window_fill();
-            let faded_color = |color: Color32| -> Color32 {
+            let _faded_color = |color: Color32| -> Color32 {
                 use egui::Rgba;
                 let t = if dark_mode { 0.95 } else { 0.8 };
                 egui::lerp(Rgba::from(color)..=Rgba::from(faded_color), t).into()
