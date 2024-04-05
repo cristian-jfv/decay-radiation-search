@@ -210,11 +210,12 @@ impl eframe::App for TemplateApp {
                     });
                     strip.cell(|ui| {
                         ui.separator();
-
-                        ui.hyperlink_to(
-                            "Source code",
-                            "https://github.com/cristian-jfv/decay-radiation-search",
-                        );
+                        ui.horizontal(|ui| {
+                            ui.label("Data source ENSDF 240402:");
+                            ui.hyperlink("https://www.nndc.bnl.gov/ensdfarchivals/");
+                            ui.label("Source code:");
+                            ui.hyperlink("https://github.com/cristian-jfv/decay-radiation-search");
+                        });
 
                         ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                             egui::warn_if_debug_build(ui);
