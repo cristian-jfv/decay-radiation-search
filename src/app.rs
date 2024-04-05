@@ -1,21 +1,44 @@
-use egui::{Color32, Layout, TextStyle};
+use egui::{Color32, TextStyle};
 use egui_extras::{Size, StripBuilder};
+use log::debug;
 
-use super::query_parser::parse_user_query;
+use crate::query_parser::search_energies;
+
+const GAMMA_EXAMPLE_STRING: &str = "# This is a comment and is not considered for the query
+# The energy can be in eV, keV, and MeV
+
+6.96 keV 1% # Uncertainty is expressed in percentage
+215.9 keV 1%
+231.6 keV 0.5%
+0.2389 MeV 0.5%
+
+# It is possible to show all radiation records from a decay dataset or only the ones that match the query";
+
+const ALPHA_EXAMPLE_STRING: &str = "4.149 MeV 0.5%
+4.198 MeV 1%";
 
 #[derive(PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "type")]
-enum SearchMode {
-    Any,
-    AtLeast,
-    Only,
+pub enum PrintMode {
+    Everything,
+    OnlyMatches,
 }
 
 #[derive(PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "type")]
-enum RadiatonType {
+pub enum RadiationType {
     Gamma,
     Alpha,
+}
+
+impl PartialEq<String> for RadiationType {
+    fn eq(&self, other: &String) -> bool {
+        match (self, other.as_str()) {
+            (RadiationType::Gamma, "G") => true,
+            (RadiationType::Alpha, "A") => true,
+            _ => false,
+        }
+    }
 }
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -24,20 +47,20 @@ enum RadiatonType {
 pub struct TemplateApp {
     //#[serde(skip)] // This how you opt-out of serialization of a field
     user_query: String,
-    search_mode: SearchMode,
+    print_mode: PrintMode,
     message_to_user: String,
     search_results: String,
-    radiation_type: RadiatonType,
+    radiation_type: RadiationType,
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             user_query: "Enter radiation energy or explore the given examples".to_string(),
-            search_mode: SearchMode::Any,
+            print_mode: PrintMode::OnlyMatches,
             message_to_user: "Waiting for input".to_string(),
             search_results: "No results".to_string(),
-            radiation_type: RadiatonType::Gamma,
+            radiation_type: RadiationType::Gamma,
         }
     }
 }
@@ -115,44 +138,76 @@ impl eframe::App for TemplateApp {
                 .vertical(|mut strip| {
                     // Examples bar
                     strip.cell(|ui| {
-                        ui.painter().rect_filled(
-                            ui.available_rect_before_wrap(),
-                            0.0,
-                            faded_color(Color32::BLUE),
-                        );
-                        ui.label("Examples?");
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::LEFT), |ui| {
+                            if ui.button("Gamma example").clicked() {
+                                self.user_query = GAMMA_EXAMPLE_STRING.to_string();
+                                self.radiation_type = RadiationType::Gamma;
+                                self.search_results = search_energies(
+                                    self.user_query.clone(),
+                                    &self.radiation_type,
+                                    &self.print_mode,
+                                );
+                            }
+                            if ui.button("Alpha example").clicked() {
+                                self.user_query = ALPHA_EXAMPLE_STRING.to_string();
+                                self.radiation_type = RadiationType::Alpha;
+                                self.search_results = search_energies(
+                                    self.user_query.clone(),
+                                    &self.radiation_type,
+                                    &self.print_mode,
+                                );
+                            }
+                        });
                     });
                     // Query area
                     strip.cell(|ui| {
-                        ui.centered_and_justified(|ui| {
-                            let user_query_response = ui.text_edit_multiline(&mut self.user_query);
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            ui.centered_and_justified(|ui| {
+                                let _user_query_response =
+                                    ui.text_edit_multiline(&mut self.user_query);
+                            })
                         });
                     });
                     // Search options
                     strip.cell(|ui| {
                         ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                             ui.label("Type: ");
-                            ui.radio_value(&mut self.radiation_type, RadiatonType::Gamma, "Gamma");
-                            ui.radio_value(&mut self.radiation_type, RadiatonType::Alpha, "Alpha");
+                            ui.radio_value(&mut self.radiation_type, RadiationType::Gamma, "Gamma");
+                            ui.radio_value(&mut self.radiation_type, RadiationType::Alpha, "Alpha");
                             ui.horizontal(|ui| ui.separator());
-                            ui.label("Search mode: ");
-                            ui.radio_value(&mut self.search_mode, SearchMode::Any, "Any");
-                            ui.radio_value(&mut self.search_mode, SearchMode::AtLeast, "At least");
-                            ui.radio_value(&mut self.search_mode, SearchMode::Only, "Only");
+                            ui.label("Show: ");
+                            ui.radio_value(
+                                &mut self.print_mode,
+                                PrintMode::OnlyMatches,
+                                "only matches",
+                            );
+                            ui.radio_value(
+                                &mut self.print_mode,
+                                PrintMode::Everything,
+                                "everything",
+                            );
                             ui.horizontal(|ui| ui.separator());
                             let search_response = ui.button("Search");
                             if search_response.clicked() {
-                                let energies = match parse_user_query(self.user_query.clone()) {
-                                    Ok(v) => v,
-                                    Err(e) => Vec::new(),
-                                };
+                                self.search_results = search_energies(
+                                    self.user_query.clone(),
+                                    &self.radiation_type,
+                                    &self.print_mode,
+                                );
                             }
                         });
                     });
                     // Results area
                     strip.cell(|ui| {
-                        ui.centered_and_justified(|ui| {
-                            let result_response = ui.text_edit_multiline(&mut self.search_results);
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            ui.centered_and_justified(|ui| {
+                                //let result_response =
+                                //   ui.text_edit_multiline(&mut self.search_results);
+                                ui.add(
+                                    egui::TextEdit::multiline(&mut self.search_results)
+                                        .font(egui::TextStyle::Monospace),
+                                )
+                            })
                         });
                     });
                     strip.cell(|ui| {
