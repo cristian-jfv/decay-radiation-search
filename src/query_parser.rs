@@ -1,6 +1,5 @@
 use crate::app::{PrintMode, RadiationType};
 use crate::database::TransitionResult;
-use egui::TextBuffer;
 use log::{debug, error};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -11,7 +10,8 @@ use crate::database::query_database;
 //const QUERY_PATTERN: &str = r"^(?P<modifier>[a-zA-Z]*)?(\s*)?(?P<energy>([0-9]*[.])?[0-9]+){1}(\s*)?((?P<unit>[a-zA-Z]*)\s?){1}(\s*)?((?P<uncertainty>([0-9]*[.])?[0-9]+)%)?$";
 //const QUERY_PATTERN: &str = r"^(?P<modifier>[a-zA-Z]*)?(\s*)?(?P<energy>([0-9]*[.])?[0-9]+)(\s*)?((?P<unit>[a-zA-Z]*)\s?)\s+((?P<uncertainty>([0-9]*[.])?[0-9]+)%)?\s*";
 const QUERY_PATTERN: &str = r"^(?P<modifier>[a-zA-Z]*)?[[:blank:]]?(?P<energy>([0-9]*[.])?[0-9]+)[[:blank:]]?(?P<unit>[a-zA-Z]+)([[:blank:]]+(?P<uncertainty>([0-9]*[.])?[0-9]+)%)?";
-enum Modifier {
+
+pub enum Modifier {
     Definitely,
     Maybe,
 }
@@ -49,12 +49,12 @@ pub struct InputError;
 
 fn calculate_energy_bounds(energy: &str, uncertainty: &str, unit: &str) -> (f64, f64) {
     let e = energy.parse::<f64>().unwrap();
-    let u: f64;
-    if !uncertainty.is_empty() {
-        u = uncertainty.parse::<f64>().unwrap() / 100.0;
+    let u: f64 = if !uncertainty.is_empty() {
+        uncertainty.parse::<f64>().unwrap() / 100.0
     } else {
-        u = 0.0;
-    }
+        0.0
+    };
+
     let base: f64 = 10.0;
     let m = match unit {
         "MeV" => 3.0,
@@ -135,7 +135,7 @@ fn print_results(
     let mut ans = String::new();
     // Summarize findings
     let noun = match energies.len() {
-        d if d == 1 => "decay",
+        1 => "decay",
         _ => "decays",
     };
     ans += format!(
@@ -183,11 +183,7 @@ pub fn search_energies(
     };
 
     match query_database(&energies, radiation_type) {
-        Some(map) => {
-            print_results(map, print_mode)
-        }
-        None => {
-            "No results found".to_string()
-        }
+        Some(map) => print_results(map, print_mode),
+        None => "No results found".to_string(),
     }
 }

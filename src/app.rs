@@ -1,7 +1,6 @@
 use egui::{Color32, TextStyle};
 use egui_extras::{Size, StripBuilder};
 
-
 use crate::query_parser::search_energies;
 
 const GAMMA_EXAMPLE_STRING: &str = "# This is a comment and is not considered for the query
@@ -33,11 +32,10 @@ pub enum RadiationType {
 
 impl PartialEq<String> for RadiationType {
     fn eq(&self, other: &String) -> bool {
-        match (self, other.as_str()) {
-            (RadiationType::Gamma, "G") => true,
-            (RadiationType::Alpha, "A") => true,
-            _ => false,
-        }
+        matches!(
+            (self, other.as_str()),
+            (RadiationType::Gamma, "G") | (RadiationType::Alpha, "A")
+        )
     }
 }
 
