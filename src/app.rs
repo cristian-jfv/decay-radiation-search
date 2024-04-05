@@ -168,31 +168,41 @@ impl eframe::App for TemplateApp {
                     });
                     // Search options
                     strip.cell(|ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            ui.label("Type: ");
-                            ui.radio_value(&mut self.radiation_type, RadiationType::Gamma, "Gamma");
-                            ui.radio_value(&mut self.radiation_type, RadiationType::Alpha, "Alpha");
-                            ui.horizontal(|ui| ui.separator());
-                            ui.label("Show: ");
-                            ui.radio_value(
-                                &mut self.print_mode,
-                                PrintMode::OnlyMatches,
-                                "only matches",
-                            );
-                            ui.radio_value(
-                                &mut self.print_mode,
-                                PrintMode::Everything,
-                                "everything",
-                            );
-                            ui.horizontal(|ui| ui.separator());
-                            let search_response = ui.button("Search");
-                            if search_response.clicked() {
-                                self.search_results = search_energies(
-                                    self.user_query.clone(),
-                                    &self.radiation_type,
-                                    &self.print_mode,
+                        egui::ScrollArea::horizontal().show(ui, |ui| {
+                            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                                ui.label("Type: ");
+                                ui.radio_value(
+                                    &mut self.radiation_type,
+                                    RadiationType::Gamma,
+                                    "Gamma",
                                 );
-                            }
+                                ui.radio_value(
+                                    &mut self.radiation_type,
+                                    RadiationType::Alpha,
+                                    "Alpha",
+                                );
+                                ui.horizontal(|ui| ui.separator());
+                                ui.label("Show: ");
+                                ui.radio_value(
+                                    &mut self.print_mode,
+                                    PrintMode::OnlyMatches,
+                                    "only matches",
+                                );
+                                ui.radio_value(
+                                    &mut self.print_mode,
+                                    PrintMode::Everything,
+                                    "everything",
+                                );
+                                ui.horizontal(|ui| ui.separator());
+                                let search_response = ui.button("Search");
+                                if search_response.clicked() {
+                                    self.search_results = search_energies(
+                                        self.user_query.clone(),
+                                        &self.radiation_type,
+                                        &self.print_mode,
+                                    );
+                                }
+                            })
                         });
                     });
                     // Results area
